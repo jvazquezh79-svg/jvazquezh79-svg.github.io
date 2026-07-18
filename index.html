@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="4DX One · Generador de tableros ejecutivos / Executive scoreboard builder">
+  <title>4DX One · Generador de tableros</title>
+  <style id="appStyles">
+    :root {
+      --bg: #e9ebed;
+      --paper: #fdfdfc;
+      --surface: #ffffff;
+      --ink: #161c22;
+      --muted: #647078;
+      --soft: #eef1f3;
+      --line: #d7dde1;
+      --charcoal: #0d1e31;
+      --charcoal-2: #16304b;
+      --accent: #b8963e;
+      --accent-soft: #f2ead3;
+      --green: #1e7f5c;
+      --amber: #a86a10;
+      --red: #b23a44;
+      --shadow: 0 22px 60px rgba(13, 30, 49, .14), 0 2px 8px rgba(13, 30, 49, .06);
+      --radius: 10px;
+      --display: Georgia, "Times New Roman", serif;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--bg); }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--bg); font-size: 14px; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent); outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    .topbar {
+      min-height: 68px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 10px 18px;
+      color: #fff;
+      background: linear-gradient(120deg, #0a1727, #132b47);
+      border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, #0a1727);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; color: #0d1e31; background: var(--accent); font-weight: 800; letter-spacing: -.08em; }
+    .brand-name { font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: .01em; }
+    .brand-name span { color: var(--accent); }
+    .file-context { min-width: 0; flex: 1; }
+    .file-context small { display: block; color: #93a5b5; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .file-context strong { display: block; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 600; }
+    .save-state { display: inline-flex; align-items: center; gap: 7px; color: #aebcc8; font-size: 11px; white-space: nowrap; }
+    .save-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #40cf91; box-shadow: 0 0 0 3px rgba(64, 207, 145, .13); }
+    .top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+    .btn {
+      min-height: 36px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 7px;
+      padding: 7px 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: #eef3f5;
+      background: rgba(255,255,255,.07);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .btn:hover { background: rgba(255,255,255,.14); }
+    .btn.primary { color: #0d1e31; border-color: var(--accent); background: var(--accent); }
+    .btn.primary:hover { filter: brightness(1.06); }
+    .btn.light { color: var(--ink); border-color: var(--line); background: var(--surface); }
+    .btn.light:hover { background: var(--soft); }
+    .btn.danger { color: var(--red); border-color: #eccfd2; background: #fff7f8; }
+    .btn.small { min-height: 30px; padding: 5px 9px; font-size: 11px; }
+    .btn.icon { min-width: 30px; padding-inline: 8px; }
+    .btn.lang { min-width: 42px; font-weight: 800; letter-spacing: .06em; }
+
+    .app-shell { min-height: calc(100vh - 68px); display: grid; grid-template-columns: 410px minmax(0, 1fr); }
+    .editor { border-right: 1px solid var(--line); background: #f7f8f9; }
+    .editor-inner { position: sticky; top: 68px; max-height: calc(100vh - 68px); overflow: auto; padding: 16px 16px 34px; scrollbar-width: thin; }
+    .editor details { margin-bottom: 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: clip; }
+    .step { width: 23px; height: 23px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 6px; color: #6d5a1e; background: var(--accent-soft); font-size: 10px; }
+    .form-body { padding: 2px 14px 15px; border-top: 1px solid #edf0f2; }
+    .field { display: grid; gap: 6px; margin-top: 11px; }
+    .field.two { grid-template-columns: 1fr 1fr; gap: 9px; }
+    .field-group { display: grid; gap: 6px; }
+    label, .label { color: #57646e; font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    .hint { color: #8a949c; font-size: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; line-height: 1.35; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #ccd5db;
+      border-radius: 7px;
+      padding: 8px 9px;
+      color: var(--ink);
+      background: #fcfdfd;
+      font-size: 12px;
+    }
+    input::placeholder, textarea::placeholder { color: #9aa6ae; }
+    input, select { min-height: 36px; }
+    textarea { min-height: 66px; resize: vertical; line-height: 1.4; }
+    input[type="color"] { min-height: 38px; padding: 4px; }
+    input[type="checkbox"] { width: 17px; min-height: 17px; accent-color: var(--accent); }
+    .inline-check { display: flex; align-items: center; gap: 8px; }
+    .inline-check label { text-transform: none; letter-spacing: 0; font-size: 11px; }
+    .list-editor { display: grid; gap: 9px; margin-top: 11px; }
+    .list-item { position: relative; padding: 10px; border: 1px solid #dde3e7; border-radius: 8px; background: #fcfdfd; }
+    .list-item-head { margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .list-item-head strong { font-size: 11px; }
+    .remove-btn { min-width: 27px; min-height: 27px; border: 0; border-radius: 6px; color: #9c3942; background: #fdeef0; font-weight: 800; }
+    .add-row { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .limit-note { color: #87939b; font-size: 10px; }
+    .editor-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 13px; }
+    .wizard-progress { margin-bottom: 14px; }
+    .wizard-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 11px; }
+    .wizard-track { height: 7px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: #dde2e6; }
+    .wizard-track span { display: block; width: 16.66%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--charcoal-2)); transition: width .2s ease; }
+    .wizard-steps { margin-bottom: 13px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .wizard-step {
+      min-width: 0;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: #66757f;
+      background: #fff;
+      font-size: 10px;
+      font-weight: 750;
+    }
+    .wizard-step.active { color: #0d1e31; border-color: var(--accent); background: var(--accent-soft); }
+    .wizard-step.complete::after { content: "✓"; margin-left: 2px; color: var(--green); }
+    .wizard-panel { display: none; }
+    .wizard-panel.active { display: block; }
+    .wizard-card { border: 1px solid var(--line); border-radius: 11px; background: #fff; overflow: clip; }
+    .wizard-card-head { padding: 15px 16px 13px; border-bottom: 1px solid #e7ebee; }
+    .wizard-card-head .overline { color: #8a7434; font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .wizard-card-head h2 { margin: 5px 0 4px; font-family: var(--display); font-size: 18px; letter-spacing: -.01em; }
+    .wizard-card-head p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .guide { margin: 12px 14px 0; padding: 10px 11px; border-left: 3px solid var(--accent); color: #5d5334; background: var(--accent-soft); font-size: 10px; line-height: 1.5; border-radius: 0 6px 6px 0; }
+    .wizard-card .form-body { border-top: 0; padding: 2px 14px 15px; }
+    .wizard-actions { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .validation { min-height: 17px; margin-top: 8px; color: var(--red); font-size: 10px; line-height: 1.35; }
+    .status-rule { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #f7f8f9; }
+    .status-rule strong { display: block; font-size: 11px; }
+    .status-rule p { margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .history-list { display: grid; gap: 7px; margin-top: 11px; }
+    .history-item { padding: 9px 10px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fcfdfd; }
+    .history-item strong { display: block; font-size: 11px; }
+    .history-item small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .history-actions { display: flex; gap: 4px; }
+    .review-checks { display: grid; gap: 7px; margin-top: 12px; }
+    .review-check { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 9px; border-radius: 7px; background: #f3f5f7; font-size: 10px; }
+
+    .stage {
+      min-width: 0;
+      padding: 18px 22px 40px;
+      overflow: auto;
+      background-color: var(--bg);
+      background-image: linear-gradient(rgba(13, 30, 49, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(13, 30, 49, .045) 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
+    .stage-head { max-width: 1250px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .stage-head h1 { margin: 0; font-size: 14px; letter-spacing: -.02em; }
+    .stage-head p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .stage-tools { display: flex; gap: 6px; }
+
+    .report {
+      width: min(100%, 1250px);
+      aspect-ratio: 16 / 9;
+      min-height: 640px;
+      margin: 0 auto;
+      padding: clamp(18px, 2vw, 26px);
+      padding-bottom: 38px;
+      position: relative;
+      overflow: hidden;
+      color: var(--ink);
+      background: var(--paper);
+      border: 1px solid #d3d9dd;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    .report::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent) 0 170px, var(--charcoal) 170px 100%); }
+    .report-header { min-height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 18px; border-bottom: 1px solid var(--line); }
+    .eyebrow { display: flex; align-items: center; gap: 8px; color: #6b7078; font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 24px; height: 3px; border-radius: 3px; background: var(--accent); }
+    .report-header h2 { margin: 8px 0 14px; font-family: var(--display); font-size: clamp(21px, 2vw, 26px); line-height: 1.05; letter-spacing: -.015em; }
+    .report-meta { display: flex; gap: clamp(14px, 2vw, 25px); text-align: right; }
+    .meta-item span { display: block; color: #8a969e; font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .meta-item strong { display: block; margin-top: 5px; font-size: 11px; }
+    .status-pill { display: inline-flex; padding: 4px 7px; border-radius: 99px; font-size: 9px !important; }
+    .status-pill.route { color: #126842; background: #dff5ea; }
+    .status-pill.watch { color: #895406; background: #fff0d3; }
+    .status-pill.blocked { color: #a32f39; background: #ffe3e6; }
+    .report-footer { position: absolute; left: clamp(18px, 2vw, 26px); right: clamp(18px, 2vw, 26px); bottom: 11px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #8b959c; font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .report-footer i { flex: 1; height: 1px; margin-inline: 12px; background: var(--line); }
+
+    .dashboard-grid { height: calc(100% - 92px); margin-top: 14px; display: grid; grid-template-columns: 1.08fr .92fr; grid-template-rows: minmax(235px, .9fr) minmax(265px, 1.1fr); gap: 12px; }
+    .module { min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .module-head { min-height: 45px; padding: 9px 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e7ebee; }
+    .module-title { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .module-kicker { width: 24px; height: 24px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 6px; color: #7a6524; background: var(--accent-soft); font-size: 9px; font-weight: 800; }
+    .module h3 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
+    .module-tag { padding: 4px 7px; flex: 0 0 auto; border-radius: 99px; color: #687781; background: var(--soft); font-size: 8px; font-weight: 750; text-transform: uppercase; }
+
+    .wig-module { color: #fff; border-color: var(--charcoal); background: var(--charcoal); }
+    .wig-module .module-head { border-bottom-color: rgba(255,255,255,.12); }
+    .wig-module .module-kicker { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+    .wig-module .module-tag { color: #b9c6d1; background: rgba(255,255,255,.08); }
+    .wig-body { height: calc(100% - 45px); padding: clamp(12px, 1.4vw, 18px); display: grid; grid-template-columns: minmax(0, 1fr) clamp(118px, 13vw, 154px); align-items: center; gap: clamp(12px, 1.5vw, 20px); }
+    .wig-label { color: #92a3b3; font-size: 8px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .wig-statement { max-width: 520px; margin: 7px 0 18px; font-family: var(--display); font-size: clamp(17px, 1.8vw, 23px); font-weight: 600; line-height: 1.22; letter-spacing: -.01em; }
+    .wig-statement em { color: var(--accent); font-style: normal; }
+    .track-labels, .goal-values { display: flex; justify-content: space-between; gap: 10px; color: #93a4b3; font-size: 8px; }
+    .track-labels { margin-bottom: 7px; text-transform: uppercase; }
+    .track-labels strong, .goal-values b { color: #fff; }
+    .goal-track { height: 9px; position: relative; overflow: hidden; border-radius: 99px; background: #2b4056; }
+    .goal-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), #d9bd76); transition: width .24s ease; }
+    .goal-values { margin-top: 7px; }
+    .score-ring { width: min(100%, 150px); aspect-ratio: 1; justify-self: center; position: relative; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--accent) 0deg, #2b4056 0deg); transition: background .24s ease; }
+    .score-ring::before { content: ""; position: absolute; inset: 12px; border-radius: 50%; background: var(--charcoal); }
+    .score-content { z-index: 1; text-align: center; }
+    .score-content strong { display: block; font-size: clamp(34px, 4vw, 48px); line-height: .95; letter-spacing: -.065em; }
+    .score-content strong span { color: var(--accent); font-size: .43em; }
+    .score-content small { display: block; margin-top: 8px; color: #93a4b3; font-size: 8px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+    .score-delta { display: inline-flex; margin-top: 7px; padding: 3px 6px; border-radius: 4px; color: #58d49c; background: rgba(38, 184, 121, .14); font-size: 8px; font-weight: 800; }
+    .trend-wrap { margin-top: 9px; }
+    .trend-head { display: flex; justify-content: space-between; gap: 8px; color: #8fa0af; font-size: 8px; }
+    .trend-bars { height: 34px; margin-top: 5px; display: flex; align-items: end; gap: 4px; }
+    .trend-bar { min-width: 0; flex: 1; height: 100%; display: flex; align-items: end; border-radius: 3px 3px 1px 1px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .trend-bar span { width: 100%; min-height: 2px; border-radius: inherit; background: var(--accent); }
+    .trend-bar.neg span { background: #e2705f; }
+    .trend-labels { margin-top: 3px; display: flex; gap: 4px; color: #7e909f; font-size: 7px; text-align: center; }
+    .trend-labels span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .measure-list, .commitment-list, .blocker-list { height: calc(100% - 45px); overflow: hidden; }
+    .measure-list { padding: 9px 14px 11px; display: grid; align-content: start; gap: 8px; }
+    .measure-card { padding: 9px 10px; border: 1px solid #e0e5e9; border-radius: 8px; background: #fcfdfd; }
+    .measure-top { display: flex; justify-content: space-between; gap: 10px; }
+    .measure-name { min-width: 0; font-size: 11px; font-weight: 700; line-height: 1.25; }
+    .measure-value { flex: 0 0 auto; color: var(--green); font-size: 17px; font-weight: 800; letter-spacing: -.04em; }
+    .measure-meta { margin-top: 4px; display: flex; justify-content: space-between; gap: 8px; color: #829099; font-size: 8px; }
+    .bar { height: 6px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: #e5eaed; }
+    .bar span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .24s ease; }
+    .empty { height: 100%; display: grid; place-items: center; padding: 20px; color: #89959d; text-align: center; font-size: 10px; }
+
+    .commitment-list { padding: 2px 14px 8px; }
+    .commitment-row { min-height: 50px; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 9px; border-bottom: 1px solid #e7ebee; }
+    .commitment-row:last-child { border-bottom: 0; }
+    .done-mark { width: 17px; height: 17px; display: grid; place-items: center; border: 1.5px solid #b9c4ca; border-radius: 5px; color: #fff; font-size: 9px; }
+    .done-mark.done { border-color: var(--green); background: var(--green); }
+    .commitment-copy strong { display: block; font-size: 10px; line-height: 1.25; }
+    .commitment-copy small { display: block; margin-top: 3px; color: #84919a; font-size: 8px; }
+    .commitment-side { text-align: right; }
+    .avatar { width: 23px; height: 23px; margin-left: auto; display: grid; place-items: center; border-radius: 50%; color: #6d5a1e; background: var(--accent-soft); font-size: 8px; font-weight: 800; }
+    .commitment-side time { display: block; margin-top: 3px; color: #7a8790; font-size: 8px; }
+    .completion-strip { margin-top: 8px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; color: #74818a; font-size: 8px; }
+    .completion-strip .bar { margin: 0; height: 5px; }
+    .completion-strip .bar span { background: var(--green); }
+
+    .blockers-module { border-color: #e8d6d8; }
+    .blockers-module .module-head { border-bottom-color: #efdee0; background: #fffafa; }
+    .blockers-module .module-kicker { color: var(--red); background: #fbe7e9; }
+    .blocker-list { padding: 2px 14px 8px; }
+    .blocker-row { min-height: 60px; display: grid; grid-template-columns: 5px minmax(0, 1fr) auto; align-items: center; gap: 9px; border-bottom: 1px solid #eee6e7; }
+    .blocker-row:last-child { border-bottom: 0; }
+    .severity-bar { width: 5px; height: 42px; border-radius: 99px; background: var(--red); }
+    .severity-bar.medium { background: #d9952a; }
+    .severity-bar.low { background: var(--green); }
+    .blocker-copy strong { display: block; font-size: 10px; line-height: 1.25; }
+    .blocker-copy p { margin: 4px 0 0; color: #7d8991; font-size: 8px; line-height: 1.3; }
+    .blocker-side { text-align: right; }
+    .severity-label { display: inline-flex; padding: 3px 6px; border-radius: 4px; color: #a8323c; background: #fbe7e9; font-size: 7px; font-weight: 800; text-transform: uppercase; }
+    .severity-label.medium { color: #895406; background: #fff0d3; }
+    .severity-label.low { color: #146643; background: #dff5ea; }
+    .blocker-side small { display: block; margin-top: 5px; color: #85919a; font-size: 8px; }
+    .decision-line { margin-top: 3px; color: #5d6971; font-size: 8px; line-height: 1.25; }
+    .cadence-strip { min-height: 38px; margin-top: 7px; padding-top: 7px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #eee6e7; color: #6f7c85; font-size: 8px; }
+
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 40; max-width: min(360px, calc(100vw - 44px)); padding: 12px 15px; border-radius: 8px; color: #fff; background: #0d1e31; box-shadow: 0 12px 30px rgba(0,0,0,.22); font-size: 11px; font-weight: 700; opacity: 0; transform: translateY(10px); pointer-events: none; transition: .2s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    body.preview-only .app-shell { grid-template-columns: 1fr; }
+    body.preview-only .editor { display: none; }
+
+    .overlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(8, 16, 27, .58); backdrop-filter: blur(3px); }
+    .overlay.show { display: flex; }
+    .modal { width: min(440px, 100%); padding: 26px 26px 20px; border-radius: 12px; background: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.35); text-align: center; }
+    .modal-mark { width: 46px; height: 46px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 10px; color: #0d1e31; background: var(--accent); font-weight: 800; font-size: 19px; }
+    .modal h2 { margin: 0 0 8px; font-family: var(--display); font-size: 22px; letter-spacing: -.01em; }
+    .modal p { margin: 0 0 16px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .modal-actions { display: grid; gap: 8px; }
+    .modal-actions .btn { width: 100%; min-height: 42px; }
+    .modal-note { margin-top: 12px; font-size: 10px; color: #8a949c; }
+    .modal.confirm { text-align: left; }
+    .modal.confirm p { margin-bottom: 6px; }
+    .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+    .confirm-actions .btn { width: auto; min-height: 36px; }
+
+    @media (max-width: 1050px) {
+      .topbar { align-items: flex-start; flex-wrap: wrap; }
+      .file-context { order: 3; flex-basis: 100%; }
+      .app-shell { grid-template-columns: 360px minmax(0, 1fr); }
+      .report { min-height: 620px; }
+      .report-meta .meta-item:nth-child(2) { display: none; }
+    }
+
+    @media (max-width: 780px) {
+      .topbar { position: static; }
+      .save-state { display: none; }
+      .top-actions { margin-left: auto; }
+      .top-actions .btn:not(.primary):not(#viewBtn):not(#langBtn) { display: none; }
+      .app-shell { display: block; }
+      .editor { border-right: 0; border-bottom: 1px solid var(--line); }
+      .editor-inner { position: static; max-height: none; }
+      .stage { padding: 14px 10px 30px; }
+      .stage-head { align-items: flex-start; }
+      .report { aspect-ratio: auto; min-height: 0; padding: 17px; overflow: visible; }
+      .report-header { grid-template-columns: 1fr; }
+      .report-meta { margin-bottom: 12px; text-align: left; }
+      .report-footer { position: static; margin-top: 14px; }
+      .dashboard-grid { height: auto; grid-template-columns: 1fr; grid-template-rows: none; }
+      .module { min-height: 260px; }
+      .wig-module { min-height: 330px; }
+      .commitments-module, .blockers-module { min-height: 310px; }
+      .wig-body { grid-template-columns: minmax(0, 1fr) 128px; }
+      body.preview-only .top-actions .btn { display: inline-flex; }
+    }
+
+    @media (max-width: 520px) {
+      .brand-name { display: none; }
+      .topbar { gap: 8px; padding-inline: 10px; }
+      .top-actions { gap: 5px; }
+      .btn { padding-inline: 9px; }
+      .stage-head { display: block; }
+      .stage-tools { margin-top: 9px; }
+      .report-header h2 { font-size: 20px; }
+      .report-meta { flex-wrap: wrap; }
+      .wig-body { grid-template-columns: 1fr; }
+      .score-ring { width: 126px; }
+      .field.two { grid-template-columns: 1fr; }
+      .editor-footer { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      @page { size: 13.333in 7.5in; margin: .22in; }
+      :root { --shadow: none; }
+      html, body { width: 100%; min-width: 0; background: #fff; }
+      .topbar, .editor, .stage-head, .toast, .overlay { display: none !important; }
+      .app-shell { display: block; min-height: 0; }
+      .stage { padding: 0; overflow: visible; background: #fff; }
+      .report { width: 100%; max-width: none; min-height: 0; height: 7.06in; aspect-ratio: 16 / 9; margin: 0; padding: .18in; padding-bottom: .34in; border: 0; border-radius: 0; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .report-footer { bottom: .06in; left: .18in; right: .18in; }
+      .dashboard-grid { height: calc(100% - 88px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" aria-label="4DX One">
+      <div class="brand-mark" aria-hidden="true">4×</div>
+      <div class="brand-name">4DX <span>One</span></div>
+    </div>
+    <div class="file-context">
+      <small data-i18n="ctxActive">Tablero activo</small>
+      <strong id="activeBoardName">—</strong>
+    </div>
+    <span class="save-state" id="saveState">Guardado localmente</span>
+    <nav class="top-actions" aria-label="Acciones del tablero">
+      <button class="btn lang" type="button" id="langBtn" aria-label="Cambiar idioma / Switch language">EN</button>
+      <button class="btn" type="button" id="newBtn" data-i18n="btnNew">Nuevo</button>
+      <button class="btn" type="button" id="importBtn" data-i18n="btnImport">Importar</button>
+      <button class="btn" type="button" id="jsonBtn" data-i18n="btnJson">Guardar JSON</button>
+      <button class="btn" type="button" id="htmlBtn" data-i18n="btnHtml">Generar HTML</button>
+      <button class="btn" type="button" id="viewBtn">Presentar</button>
+      <button class="btn primary" type="button" id="printBtn" data-i18n="btnPrint">Imprimir / PDF</button>
+      <input class="sr-only" type="file" id="fileInput" accept="application/json,.json">
+    </nav>
+  </header>
+
+  <div class="app-shell">
+    <aside class="editor" aria-label="Editor del tablero">
+      <div class="editor-inner">
+        <div class="wizard-progress" aria-label="Progreso del asistente">
+          <div class="wizard-progress-head"><strong id="wizardStepLabel">Paso 1 de 6</strong><span id="wizardPercent">17%</span></div>
+          <div class="wizard-track"><span id="wizardProgressBar" style="width: 17%;"></span></div>
+        </div>
+        <nav class="wizard-steps" aria-label="Pasos del asistente">
+          <button class="wizard-step active" type="button" data-go-step="0" data-i18n-aria="ws0" aria-label="Identidad" aria-current="step">1</button>
+          <button class="wizard-step" type="button" data-go-step="1" data-i18n-aria="ws1" aria-label="Meta crucial">D1</button>
+          <button class="wizard-step" type="button" data-go-step="2" data-i18n-aria="ws2" aria-label="Medidas predictivas">D2</button>
+          <button class="wizard-step" type="button" data-go-step="3" data-i18n-aria="ws3" aria-label="Compromisos">D4</button>
+          <button class="wizard-step" type="button" data-go-step="4" data-i18n-aria="ws4" aria-label="Bloqueos">!</button>
+          <button class="wizard-step" type="button" data-go-step="5" data-i18n-aria="ws5" aria-label="Revisión">✓</button>
+        </nav>
+
+        <section class="wizard-panel active" data-panel="0">
+          <div class="wizard-card">
+            <header class="wizard-card-head"><span class="overline" data-i18n="p0over"></span><h2 data-i18n="p0title"></h2><p data-i18n="p0desc"></p></header>
+            <div class="guide"><strong data-i18n="tipLabel"></strong> <span data-i18n="p0guide"></span></div>
+            <div class="form-body">
+              <div class="field"><label for="boardTitle" data-i18n="lblTitle"></label><input id="boardTitle" data-field="meta.title" maxlength="80" data-i18n-ph="phTitle"></div>
+              <div class="field"><label for="team" data-i18n="lblTeam"></label><input id="team" data-field="meta.team" maxlength="50" data-i18n-ph="phTeam"></div>
+              <div class="field two">
+                <div class="field-group"><label for="period" data-i18n="lblPeriod"></label><input id="period" data-field="meta.period" maxlength="35" data-i18n-ph="phPeriod"></div>
+                <div class="field-group"><label for="owner" data-i18n="lblOwner"></label><input id="owner" data-field="meta.owner" maxlength="40" data-i18n-ph="phOwner"></div>
+              </div>
+              <div class="field"><label for="accent" data-i18n="lblAccent"></label><input id="accent" type="color" data-field="meta.accent"><small class="hint" data-i18n="hAccent"></small></div>
+              <div class="status-rule"><strong data-i18n="ruleTitle"></strong><p data-i18n="ruleBody"></p></div>
+              <p class="validation" data-validation="0"></p>
+            </div>
+          </div>
+          <div class="wizard-actions"><span></span><button class="btn primary" type="button" data-next="" data-i18n="btnContinue"></button></div>
+        </section>
+
+        <section class="wizard-panel" data-panel="1">
+          <div class="wizard-card">
+            <header class="wizard-card-head"><span class="overline" data-i18n="p1over"></span><h2 data-i18n="p1title"></h2><p data-i18n="p1desc"></p></header>
+            <div class="guide"><strong data-i18n="formulaLabel"></strong> <span data-i18n="p1guide"></span></div>
+            <div class="form-body">
+              <div class="field two">
+                <div class="field-group"><label for="verb" data-i18n="lblVerb"></label><input id="verb" data-field="goal.verb" maxlength="20" data-i18n-ph="phVerb"></div>
+                <div class="field-group"><label for="metric" data-i18n="lblMetric"></label><input id="metric" data-field="goal.metric" maxlength="55" data-i18n-ph="phMetric"></div>
+              </div>
+              <small class="hint" data-i18n="hMetric"></small>
+              <div class="field two">
+                <div class="field-group"><label for="startValue" data-i18n="lblStart"></label><input id="startValue" type="number" step="0.1" data-field="goal.start"></div>
+                <div class="field-group"><label for="targetValue" data-i18n="lblTarget"></label><input id="targetValue" type="number" step="0.1" data-field="goal.target"></div>
+              </div>
+              <div class="field two">
+                <div class="field-group"><label for="currentValue" data-i18n="lblCurrent"></label><input id="currentValue" type="number" step="0.1" data-field="goal.current"></div>
+                <div class="field-group"><label for="unit" data-i18n="lblUnit"></label><input id="unit" data-field="goal.unit" maxlength="8" data-i18n-ph="phUnit"></div>
+              </div>
+              <div class="field two">
+                <div class="field-group"><label for="goalStartDate" data-i18n="lblStartDate"></label><input id="goalStartDate" type="date" data-field="goal.startDate"></div>
+                <div class="field-group"><label for="goalDate" data-i18n="lblDate"></label><input id="goalDate" type="date" data-field="goal.date"></div>
+              </div>
+              <p class="validation" data-validation="1"></p>
+            </div>
+          </div>
+          <div class="wizard-actions"><button class="btn light" type="button" data-back="" data-i18n="btnBack"></button><button class="btn primary" type="button" data-next="" data-i18n="btnContinue"></button></div>
+        </section>
+
+        <section class="wizard-panel" data-panel="2">
+          <div class="wizard-card">
+            <header class="wizard-card-head"><span class="overline" data-i18n="p2over"></span><h2 data-i18n="p2title"></h2><p data-i18n="p2desc"></p></header>
+            <div class="guide"><strong data-i18n="goodLabel"></strong> <span data-i18n="p2guide"></span></div>
+            <div class="form-body">
+              <div id="measuresEditor" class="list-editor"></div>
+              <div class="add-row"><span class="limit-note" data-i18n="limitMeasures"></span><button class="btn light small" type="button" data-add="measures" data-i18n="btnAdd"></button></div>
+              <p class="validation" data-validation="2"></p>
+            </div>
+          </div>
+          <div class="wizard-actions"><button class="btn light" type="button" data-back="" data-i18n="btnBack"></button><button class="btn primary" type="button" data-next="" data-i18n="btnContinue"></button></div>
+        </section>
+
+        <section class="wizard-panel" data-panel="3">
+          <div class="wizard-card">
+            <header class="wizard-card-head"><span class="overline" data-i18n="p3over"></span><h2 data-i18n="p3title"></h2><p data-i18n="p3desc"></p></header>
+            <div class="guide"><strong data-i18n="avoidLabel"></strong> <span data-i18n="p3guide"></span></div>
+            <div class="form-body">
+              <div id="commitmentsEditor" class="list-editor"></div>
+              <div class="add-row"><span class="limit-note" data-i18n="limitCommitments"></span><button class="btn light small" type="button" data-add="commitments" data-i18n="btnAdd"></button></div>
+              <p class="validation" data-validation="3"></p>
+            </div>
+          </div>
+          <div class="wizard-actions"><button class="btn light" type="button" data-back="" data-i18n="btnBack"></button><button class="btn primary" type="button" data-next="" data-i18n="btnContinue"></button></div>
+        </section>
+
+        <section class="wizard-panel" data-panel="4">
+          <div class="wizard-card">
+            <header class="wizard-card-head"><span class="overline" data-i18n="p4over"></span><h2 data-i18n="p4title"></h2><p data-i18n="p4desc"></p></header>
+            <div class="guide"><strong data-i18n="execLabel"></strong> <span data-i18n="p4guide"></span></div>
+            <div class="form-body">
+              <div id="blockersEditor" class="list-editor"></div>
+              <div class="add-row"><span class="limit-note" data-i18n="limitBlockers"></span><button class="btn light small" type="button" data-add="blockers" data-i18n="btnAdd"></button></div>
+              <div class="field"><label for="nextSession" data-i18n="lblSession"></label><input id="nextSession" data-field="cadence.nextSession" maxlength="40" data-i18n-ph="phSession"></div>
+              <p class="validation" data-validation="4"></p>
+            </div>
+          </div>
+          <div class="wizard-actions"><button class="btn light" type="button" data-back="" data-i18n="btnBack"></button><button class="btn primary" type="button" data-next="" data-i18n="btnReview"></button></div>
+        </section>
+
+        <section class="wizard-panel" data-panel="5">
+          <div class="wizard-card">
+            <header class="wizard-card-head"><span class="overline" data-i18n="p5over"></span><h2 data-i18n="p5title"></h2><p data-i18n="p5desc"></p></header>
+            <div class="form-body">
+              <div class="review-checks" id="reviewChecks"></div>
+              <div class="status-rule"><strong id="autoStatusSummary"></strong><p id="autoStatusReason"></p></div>
+              <div class="field"><label for="snapshotLabel" data-i18n="lblSnapshot"></label><input id="snapshotLabel" maxlength="40" data-i18n-ph="phSnapshot"></div>
+              <button class="btn primary" style="width:100%;margin-top:10px" type="button" id="snapshotBtn" data-i18n="btnSnapshot"></button>
+              <div class="history-list" id="historyList"></div>
+            </div>
+          </div>
+          <div class="wizard-actions"><button class="btn light" type="button" data-back="" data-i18n="btnBack"></button><button class="btn primary" type="button" id="finishBtn" data-i18n="btnFinish"></button></div>
+          <div class="editor-footer">
+            <button class="btn light" type="button" id="exampleBtn" data-i18n="btnExample"></button>
+            <button class="btn danger" type="button" id="clearBtn" data-i18n="btnClear"></button>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-head">
+        <div><h1 data-i18n="stageTitle"></h1><p data-i18n="stageSub"></p></div>
+        <div class="stage-tools"><button class="btn light small" type="button" id="fitBtn" data-i18n="btnFit"></button></div>
+      </div>
+
+      <article class="report" id="report" aria-labelledby="reportTitle">
+        <header class="report-header">
+          <div>
+            <div class="eyebrow" data-i18n="eyebrow"></div>
+            <h2 id="reportTitle" data-out="meta.title">—</h2>
+          </div>
+          <div class="report-meta">
+            <div class="meta-item"><span data-i18n="metaPeriod"></span><strong data-out="meta.period">—</strong></div>
+            <div class="meta-item"><span data-i18n="metaOwner"></span><strong data-out="meta.owner">—</strong></div>
+            <div class="meta-item"><span data-i18n="metaStatus"></span><strong class="status-pill route" id="statusPill">—</strong></div>
+          </div>
+        </header>
+
+        <div class="dashboard-grid">
+          <section class="module wig-module" aria-labelledby="wigTitle">
+            <header class="module-head">
+              <div class="module-title"><span class="module-kicker">01</span><h3 id="wigTitle" data-i18n="modD1"></h3></div>
+              <span class="module-tag" data-i18n="tagLag"></span>
+            </header>
+            <div class="wig-body">
+              <div>
+                <div class="wig-label" data-i18n="wigLabel"></div>
+                <p class="wig-statement" id="wigStatement"></p>
+                <div class="track-labels"><span><span data-i18n="baseWord"></span> <strong id="startLabel"></strong></span><span><span data-i18n="targetWord"></span> <strong id="targetLabel"></strong></span></div>
+                <div class="goal-track" role="img" id="goalTrack" aria-label=""><div class="goal-fill" id="goalFill"></div></div>
+                <div class="goal-values"><span data-i18n="startWord"></span><b id="currentLabel"></b><span id="dateLabel"></span></div>
+                <div class="trend-wrap">
+                  <div class="trend-head"><span data-i18n="trendTitle"></span><span id="trendRange"></span></div>
+                  <div class="trend-bars" id="trendBars"></div>
+                  <div class="trend-labels" id="trendLabels"></div>
+                </div>
+              </div>
+              <div class="score-ring" id="scoreRing" role="img" aria-label="">
+                <div class="score-content"><strong><span id="scoreValue">0</span><span id="scoreUnit">%</span></strong><small data-i18n="resultWord"></small><span class="score-delta" id="progressLabel"></span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="module" aria-labelledby="measuresTitle">
+            <header class="module-head">
+              <div class="module-title"><span class="module-kicker">02</span><h3 id="measuresTitle" data-i18n="modD2"></h3></div>
+              <span class="module-tag" id="measureCount"></span>
+            </header>
+            <div class="measure-list" id="measuresPreview"></div>
+          </section>
+
+          <section class="module commitments-module" aria-labelledby="commitmentsTitle">
+            <header class="module-head">
+              <div class="module-title"><span class="module-kicker">03</span><h3 id="commitmentsTitle" data-i18n="modD3"></h3></div>
+              <span class="module-tag" id="commitmentCount"></span>
+            </header>
+            <div class="commitment-list" id="commitmentsPreview"></div>
+          </section>
+
+          <section class="module blockers-module" aria-labelledby="blockersTitle">
+            <header class="module-head">
+              <div class="module-title"><span class="module-kicker">04</span><h3 id="blockersTitle" data-i18n="modD4"></h3></div>
+              <span class="module-tag" id="blockerCount"></span>
+            </header>
+            <div class="blocker-list" id="blockersPreview"></div>
+          </section>
+        </div>
+
+        <footer class="report-footer"><span data-i18n="footerLeft"></span><i aria-hidden="true"></i><span data-i18n="footerConf"></span></footer>
+      </article>
+    </main>
+  </div>
+
+  <div class="overlay" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="modal">
+      <div class="modal-mark" aria-hidden="true">4×</div>
+      <h2 id="welcomeTitle" data-i18n="wTitle"></h2>
+      <p data-i18n="wBody"></p>
+      <div class="modal-actions">
+        <button class="btn primary" type="button" id="welcomeExample" data-i18n="wExample"></button>
+        <button class="btn light" type="button" id="welcomeBlank" data-i18n="wBlank"></button>
+      </div>
+      <p class="modal-note" data-i18n="wNote"></p>
+    </div>
+  </div>
+
+  <div class="overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+    <div class="modal confirm">
+      <p id="confirmText" style="color:var(--ink);font-size:13px;font-weight:600"></p>
+      <div class="confirm-actions">
+        <button class="btn light" type="button" id="confirmCancel" data-i18n="btnCancel"></button>
+        <button class="btn primary" type="button" id="confirmOk" data-i18n="btnOk"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "4dx-one-board-v2";
+      const LANG_KEY = "4dx-one-lang";
+      const LIMITS = { measures: 4, commitments: 4, blockers: 3 };
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+      const clone = value => JSON.parse(JSON.stringify(value));
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+      const str = (value, fallback = "") => typeof value === "string" ? value : (value == null ? fallback : String(value));
+      const esc = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+
+      /* ---------- i18n ---------- */
+      const T = {
+        es: {
+          ctxActive: "Tablero activo",
+          saveSaved: "Guardado localmente", saveSaving: "Guardando…", saveNone: "Sesión sin guardado",
+          btnNew: "Nuevo", btnImport: "Importar", btnJson: "Guardar JSON", btnHtml: "Generar HTML",
+          btnPresent: "Presentar", btnEdit: "Editar", btnPrint: "Imprimir / PDF",
+          stepOf: n => `Paso ${n} de 6`,
+          ws0: "Identidad", ws1: "Meta crucial", ws2: "Medidas predictivas", ws3: "Compromisos", ws4: "Bloqueos", ws5: "Revisión",
+          tipLabel: "Consejo:", formulaLabel: "Fórmula:", goodLabel: "Buena medida:", avoidLabel: "Evita lo genérico:", execLabel: "Enfoque ejecutivo:",
+          p0over: "Preparación", p0title: "Identidad y periodo", p0desc: "Ubica a dirección en cinco segundos: qué se reporta, de qué semana y quién responde.",
+          p0guide: "usa un título orientado al resultado, no al proyecto. Ej.: “Excelencia en entregas · Operaciones”.",
+          lblTitle: "Título del tablero", lblTeam: "Equipo o área", lblPeriod: "Periodo", lblOwner: "Responsable", lblAccent: "Acento visual",
+          hAccent: "Se aplica a todo el tablero y al PDF exportado. El dorado y azul marino proyectan sobriedad ejecutiva.",
+          phTitle: "Ej. Excelencia en entregas · Operaciones", phTeam: "Ej. Equipo de Operaciones", phPeriod: "Ej. Semana 29 / 2026", phOwner: "Ej. Mariana Torres",
+          ruleTitle: "El semáforo será automático", ruleBody: "Se calcula con el avance esperado, el cumplimiento de medidas predictivas y la severidad de los bloqueos.",
+          p1over: "Disciplina 1", p1title: "Meta crucialmente importante", p1desc: "Define una sola WIG con punto de partida, resultado actual, destino y fecha.",
+          p1guide: "pasar de X a Y antes de la fecha Z. Ej.: elevar entregas a tiempo de 78% a 92% antes del 30 de septiembre.",
+          lblVerb: "Acción", lblMetric: "Indicador", lblStart: "De X (línea base)", lblTarget: "A Y (meta)", lblCurrent: "Resultado actual", lblUnit: "Unidad", lblStartDate: "Fecha de inicio", lblDate: "Fecha objetivo",
+          hMetric: "El indicador debe ser medible y comprensible para dirección sin explicación adicional.",
+          phVerb: "Ej. Elevar", phMetric: "Ej. entregas a tiempo", phUnit: "%, pts, u",
+          p2over: "Disciplina 2", p2title: "Medidas predictivas", p2desc: "Captura las acciones controlables que anticipan el resultado de la WIG.",
+          p2guide: "el equipo puede influirla cada semana y su avance predice la meta. Ej.: “Confirmación con proveedor: 90% de órdenes confirmadas”.",
+          limitMeasures: "Máximo 4 medidas", btnAdd: "+ Agregar",
+          p3over: "Disciplina 4", p3title: "Compromisos semanales", p3desc: "Acciones concretas con responsable y fecha para la próxima rendición de cuentas.",
+          p3guide: "cada compromiso produce evidencia y se declara cumplido o pendiente. Ej.: “Cerrar ventana de confirmación a las 16:00 — Laura, viernes”.",
+          limitCommitments: "Máximo 4 compromisos",
+          p4over: "Cuarto bloque", p4title: "Bloqueos y apoyo directivo", p4desc: "Expón el impedimento, la decisión solicitada, quién actúa y para cuándo.",
+          p4guide: "no describas solo el problema: formula la decisión que dirección puede tomar. Ej.: “Autorizar escalación con Compras corporativas”.",
+          limitBlockers: "Máximo 3 bloqueos", lblSession: "Próxima sesión WIG", phSession: "Ej. 20 Jul · 09:00",
+          p5over: "Cierre semanal", p5title: "Revisar, guardar y entregar", p5desc: "Confirma la calidad del reporte, guarda la fotografía semanal y genera la versión de consulta.",
+          ck0: "Identidad y periodo", ck1: "WIG medible y fechada", ck2: "Medidas predictivas", ck3: "Compromisos con dueño", ck4: "Bloqueos listos para decisión",
+          okWord: "Listo", pendWord: "Pendiente",
+          autoPrefix: "Semáforo automático:",
+          lblSnapshot: "Nombre de la fotografía", phSnapshot: "Ej. Semana 29 / 2026", btnSnapshot: "Guardar fotografía semanal",
+          histEmpty: "Aún no hay fotografías. Guarda una al cerrar cada semana.", histResult: v => `resultado ${v}`, histLoad: "Cargar",
+          btnFinish: "Presentar resultado", btnExample: "Cargar ejemplo", btnClear: "Limpiar datos", btnContinue: "Continuar", btnBack: "Anterior", btnReview: "Revisar tablero",
+          stageTitle: "Vista previa del One Page", stageSub: "4DX + 4-Blocker · actualizada en tiempo real", btnFit: "Ajustar vista",
+          eyebrow: "4DX One · Scoreboard semanal", metaPeriod: "Periodo", metaOwner: "Responsable", metaStatus: "Estado",
+          modD1: "D1 · Meta y resultado", tagLag: "Resultado · Lag", wigLabel: "De X a Y antes de cuándo",
+          baseWord: "Línea base", targetWord: "Meta", startWord: "Inicio", todayWord: "Hoy:",
+          noDate: "Sin fecha", trendTitle: "Tendencia de 8 semanas", weeksCount: n => `${n} semana${n === 1 ? "" : "s"}`,
+          resultWord: "Resultado actual", toward: p => `${p}% hacia la meta`, ariaProgress: p => `${p} por ciento de avance hacia la meta`,
+          modD2: "D2 · Medidas predictivas", modD3: "D4 · Compromisos", modD4: "Bloqueos y decisiones",
+          nActive: n => `${n} activa${n === 1 ? "" : "s"}`, nDone: (d, tt) => `${d} / ${tt} cumplidos`, nOpen: n => `${n} abierto${n === 1 ? "" : "s"}`,
+          emptyMeasures: "Agrega una medida predictiva para mostrar las acciones que impulsan la meta.",
+          emptyCommit: "Agrega compromisos concretos para la próxima sesión de rendición de cuentas.",
+          emptyBlockers: "Sin bloqueos abiertos. Registra aquí decisiones o apoyo requerido.",
+          cadenceLabel: "Próxima sesión WIG", tbd: "Por definir",
+          footerLeft: "4DX One · Las 4 Disciplinas de la Ejecución", footerConf: "Documento de trabajo · Confidencial",
+          itMeasure: "Medida", itCommit: "Compromiso", itBlocker: "Bloqueo", del: "Eliminar",
+          lblName: "Nombre", lblActual: "Actual", lblGoalShort: "Meta", lblUnitShort: "Unidad", lblEvidence: "Evidencia (ej. 23 de 25)",
+          lblCommitText: "Compromiso", lblOwnerShort: "Responsable", lblDue: "Fecha", lblDone: "Marcar como cumplido",
+          lblBlockTitle: "Título", lblImpact: "Impacto", lblDecision: "Decisión o apoyo solicitado", lblDeadline: "Fecha límite", lblSeverity: "Severidad",
+          dfBoardTitle: "Nuevo tablero 4DX", dfVerb: "Elevar", wordIndicator: "indicador",
+          dfMeasure: "Nueva medida predictiva", dfEvidence: "Evidencia pendiente", dfCommit: "Nuevo compromiso",
+          dfBlockTitle: "Nuevo bloqueo", dfBlockDetail: "Describe el impacto.", dfBlockDecision: "Define la decisión solicitada.",
+          sevHigh: "Alto", sevMed: "Medio", sevLow: "Bajo",
+          stRoute: "EN RUTA", stWatch: "ATENCIÓN", stBlocked: "BLOQUEADO",
+          rRoute: "La WIG sigue la trayectoria esperada y las medidas predictivas sostienen el resultado.",
+          rWatch: "El avance está por debajo de la trayectoria esperada o las medidas predictivas cumplen menos de 85% de su meta.",
+          rBlocked: "Existe al menos un bloqueo de severidad alta que requiere intervención directiva.",
+          vTitle: "Escribe el título del tablero.", vPeriod: "Indica el periodo reportado.", vOwner: "Asigna al responsable del reporte.",
+          vMetric: "Define el indicador de la WIG.", vBase: "La línea base y la meta deben ser diferentes.", vDates: "Captura las fechas de inicio y objetivo.", vOrder: "La fecha objetivo debe ser posterior al inicio.",
+          vMeas: "Agrega al menos una medida predictiva.", vMeasFields: "Cada medida necesita nombre y meta mayor a cero.",
+          vCommit: "Agrega al menos un compromiso semanal.", vCommitFields: "Cada compromiso necesita descripción, responsable y fecha.",
+          vBlock: "Cada bloqueo necesita título, decisión solicitada, responsable y fecha límite.", vSession: "Indica la próxima sesión WIG.",
+          tsSnapshot: "Fotografía semanal guardada", tsSnapDel: "Fotografía eliminada", tsSnapLoad: l => `Fotografía cargada: ${l}`,
+          tsNew: "Nuevo tablero creado", tsClear: "Datos limpiados", tsExample: "Ejemplo guía cargado",
+          tsImportOk: "Tablero importado correctamente", tsImportErr: "No se pudo importar: archivo incompatible",
+          tsJson: "Datos JSON descargados", tsHtml: "Tablero HTML generado",
+          tsPending: "Aún hay datos pendientes en el asistente", tsPresent: "Tablero listo para presentar",
+          tsFields: "Completa los campos señalados antes de continuar",
+          tsPresentMode: "Modo presentación", tsEditorMode: "Editor visible", tsLang: "Idioma: Español",
+          cfNew: "¿Crear un tablero nuevo? Guarda antes el JSON si quieres conservar los datos actuales.",
+          cfClear: "¿Limpiar el tablero actual? Esta acción no se puede deshacer.",
+          cfSnapDel: "¿Eliminar esta fotografía semanal?",
+          cfSnapLoad: "Se reemplazarán los datos actuales con la fotografía seleccionada. ¿Continuar?",
+          cfRemoveItem: "¿Eliminar este elemento?",
+          cfExample: "El ejemplo guía reemplazará los datos actuales. ¿Continuar?",
+          btnCancel: "Cancelar", btnOk: "Aceptar",
+          wTitle: "Bienvenido a 4DX One",
+          wBody: "Crea el One-Page ejecutivo de tu equipo con las 4 Disciplinas de la Ejecución. Comienza con un ejemplo completo que sirve como guía de llenado, o inicia desde un tablero en blanco con el asistente paso a paso.",
+          wExample: "Ver ejemplo guía", wBlank: "Comenzar en blanco",
+          wNote: "Podrás cargar el ejemplo en cualquier momento con «Cargar ejemplo», en el paso de revisión.",
+          noEvidence: "Sin evidencia", noDetail: "Sin detalle", decisionWord: "Decisión:", toAssign: "Por asignar",
+          commitDone: "Compromiso cumplido", commitPend: "Compromiso pendiente", doneAria: "Cumplido", pendAria: "Pendiente",
+          complianceWord: "Cumplimiento",
+          unMeasure: "Medida sin nombre", unCommit: "Compromiso sin descripción", unBlocker: "Bloqueo sin título",
+          nowLabel: "Actual"
+        },
+        en: {
+          ctxActive: "Active board",
+          saveSaved: "Saved locally", saveSaving: "Saving…", saveNone: "Session not saved",
+          btnNew: "New", btnImport: "Import", btnJson: "Save JSON", btnHtml: "Export HTML",
+          btnPresent: "Present", btnEdit: "Edit", btnPrint: "Print / PDF",
+          stepOf: n => `Step ${n} of 6`,
+          ws0: "Identity", ws1: "Wildly important goal", ws2: "Lead measures", ws3: "Commitments", ws4: "Blockers", ws5: "Review",
+          tipLabel: "Tip:", formulaLabel: "Formula:", goodLabel: "A good measure:", avoidLabel: "Avoid generic tasks:", execLabel: "Executive focus:",
+          p0over: "Setup", p0title: "Identity & period", p0desc: "Orient leadership in five seconds: what is reported, for which week, and who is accountable.",
+          p0guide: "use an outcome-oriented title, not a project name. E.g. “Delivery Excellence · Operations”.",
+          lblTitle: "Board title", lblTeam: "Team or area", lblPeriod: "Period", lblOwner: "Owner", lblAccent: "Accent color",
+          hAccent: "Applies to the whole board and the exported PDF. Gold and navy project executive sobriety.",
+          phTitle: "e.g. Delivery Excellence · Operations", phTeam: "e.g. Operations Team", phPeriod: "e.g. Week 29 / 2026", phOwner: "e.g. Mariana Torres",
+          ruleTitle: "The status light is automatic", ruleBody: "Computed from expected progress, lead-measure compliance and blocker severity.",
+          p1over: "Discipline 1", p1title: "Wildly important goal", p1desc: "Define a single WIG with a starting point, current result, destination and date.",
+          p1guide: "from X to Y by date Z. E.g. increase on-time deliveries from 78% to 92% by September 30.",
+          lblVerb: "Action", lblMetric: "Indicator", lblStart: "From X (baseline)", lblTarget: "To Y (target)", lblCurrent: "Current result", lblUnit: "Unit", lblStartDate: "Start date", lblDate: "Target date",
+          hMetric: "The indicator must be measurable and clear to leadership without further explanation.",
+          phVerb: "e.g. Increase", phMetric: "e.g. on-time deliveries", phUnit: "%, pts, u",
+          p2over: "Discipline 2", p2title: "Lead measures", p2desc: "Capture the controllable actions that predict the WIG's result.",
+          p2guide: "the team can move it every week and its progress predicts the goal. E.g. “Supplier confirmation: 90% of orders confirmed”.",
+          limitMeasures: "Up to 4 measures", btnAdd: "+ Add",
+          p3over: "Discipline 4", p3title: "Weekly commitments", p3desc: "Concrete actions with an owner and a date for the next accountability session.",
+          p3guide: "each commitment produces evidence and is declared done or pending. E.g. “Lock confirmation window at 4:00 pm — Laura, Friday”.",
+          limitCommitments: "Up to 4 commitments",
+          p4over: "Fourth block", p4title: "Blockers & executive support", p4desc: "State the impediment, the decision requested, who acts, and by when.",
+          p4guide: "don't just describe the problem: state the decision leadership can make. E.g. “Authorize escalation with Corporate Procurement”.",
+          limitBlockers: "Up to 3 blockers", lblSession: "Next WIG session", phSession: "e.g. Jul 20 · 9:00 am",
+          p5over: "Weekly close", p5title: "Review, save & deliver", p5desc: "Confirm report quality, save the weekly snapshot and generate the read-only version.",
+          ck0: "Identity & period", ck1: "Measurable, dated WIG", ck2: "Lead measures", ck3: "Owned commitments", ck4: "Decision-ready blockers",
+          okWord: "Ready", pendWord: "Pending",
+          autoPrefix: "Automatic status:",
+          lblSnapshot: "Snapshot name", phSnapshot: "e.g. Week 29 / 2026", btnSnapshot: "Save weekly snapshot",
+          histEmpty: "No snapshots yet. Save one when closing each week.", histResult: v => `result ${v}`, histLoad: "Load",
+          btnFinish: "Present result", btnExample: "Load example", btnClear: "Clear data", btnContinue: "Continue", btnBack: "Back", btnReview: "Review board",
+          stageTitle: "One-Page preview", stageSub: "4DX + 4-Blocker · updated in real time", btnFit: "Fit view",
+          eyebrow: "4DX One · Weekly scoreboard", metaPeriod: "Period", metaOwner: "Owner", metaStatus: "Status",
+          modD1: "D1 · Goal & result", tagLag: "Result · Lag", wigLabel: "From X to Y by when",
+          baseWord: "Baseline", targetWord: "Target", startWord: "Start", todayWord: "Today:",
+          noDate: "No date", trendTitle: "8-week trend", weeksCount: n => `${n} week${n === 1 ? "" : "s"}`,
+          resultWord: "Current result", toward: p => `${p}% toward goal`, ariaProgress: p => `${p} percent progress toward the goal`,
+          modD2: "D2 · Lead measures", modD3: "D4 · Commitments", modD4: "Blockers & decisions",
+          nActive: n => `${n} active`, nDone: (d, tt) => `${d} / ${tt} done`, nOpen: n => `${n} open`,
+          emptyMeasures: "Add a lead measure to show the actions driving the goal.",
+          emptyCommit: "Add concrete commitments for the next accountability session.",
+          emptyBlockers: "No open blockers. Log decisions or support needed here.",
+          cadenceLabel: "Next WIG session", tbd: "To be defined",
+          footerLeft: "4DX One · The 4 Disciplines of Execution", footerConf: "Working document · Confidential",
+          itMeasure: "Measure", itCommit: "Commitment", itBlocker: "Blocker", del: "Remove",
+          lblName: "Name", lblActual: "Current", lblGoalShort: "Target", lblUnitShort: "Unit", lblEvidence: "Evidence (e.g. 23 of 25)",
+          lblCommitText: "Commitment", lblOwnerShort: "Owner", lblDue: "Date", lblDone: "Mark as done",
+          lblBlockTitle: "Title", lblImpact: "Impact", lblDecision: "Decision or support requested", lblDeadline: "Deadline", lblSeverity: "Severity",
+          dfBoardTitle: "New 4DX board", dfVerb: "Increase", wordIndicator: "indicator",
+          dfMeasure: "New lead measure", dfEvidence: "Evidence pending", dfCommit: "New commitment",
+          dfBlockTitle: "New blocker", dfBlockDetail: "Describe the impact.", dfBlockDecision: "State the decision requested.",
+          sevHigh: "High", sevMed: "Medium", sevLow: "Low",
+          stRoute: "ON TRACK", stWatch: "AT RISK", stBlocked: "BLOCKED",
+          rRoute: "The WIG follows the expected trajectory and lead measures sustain the result.",
+          rWatch: "Progress is below the expected trajectory or lead measures are under 85% of their target.",
+          rBlocked: "At least one high-severity blocker requires executive intervention.",
+          vTitle: "Write the board title.", vPeriod: "State the reported period.", vOwner: "Assign the report owner.",
+          vMetric: "Define the WIG indicator.", vBase: "Baseline and target must differ.", vDates: "Enter the start and target dates.", vOrder: "The target date must be after the start date.",
+          vMeas: "Add at least one lead measure.", vMeasFields: "Each measure needs a name and a target above zero.",
+          vCommit: "Add at least one weekly commitment.", vCommitFields: "Each commitment needs a description, owner and date.",
+          vBlock: "Each blocker needs a title, requested decision, owner and deadline.", vSession: "State the next WIG session.",
+          tsSnapshot: "Weekly snapshot saved", tsSnapDel: "Snapshot deleted", tsSnapLoad: l => `Snapshot loaded: ${l}`,
+          tsNew: "New board created", tsClear: "Data cleared", tsExample: "Guided example loaded",
+          tsImportOk: "Board imported successfully", tsImportErr: "Import failed: incompatible file",
+          tsJson: "JSON data downloaded", tsHtml: "HTML board exported",
+          tsPending: "There are still pending fields in the wizard", tsPresent: "Board ready to present",
+          tsFields: "Complete the highlighted fields before continuing",
+          tsPresentMode: "Presentation mode", tsEditorMode: "Editor visible", tsLang: "Language: English",
+          cfNew: "Create a new board? Save the JSON first if you want to keep the current data.",
+          cfClear: "Clear the current board? This cannot be undone.",
+          cfSnapDel: "Delete this weekly snapshot?",
+          cfSnapLoad: "Current data will be replaced with the selected snapshot. Continue?",
+          cfRemoveItem: "Remove this item?",
+          cfExample: "The guided example will replace the current data. Continue?",
+          btnCancel: "Cancel", btnOk: "Confirm",
+          wTitle: "Welcome to 4DX One",
+          wBody: "Build your team's executive One-Pager with the 4 Disciplines of Execution. Start with a complete example that doubles as a fill-in guide, or begin from a blank board with the step-by-step wizard.",
+          wExample: "Open guided example", wBlank: "Start blank",
+          wNote: "You can load the example anytime via “Load example” in the review step.",
+          noEvidence: "No evidence", noDetail: "No detail", decisionWord: "Decision:", toAssign: "Unassigned",
+          commitDone: "Commitment done", commitPend: "Commitment pending", doneAria: "Done", pendAria: "Pending",
+          complianceWord: "Completion",
+          unMeasure: "Unnamed measure", unCommit: "Commitment without description", unBlocker: "Untitled blocker",
+          nowLabel: "Now"
+        }
+      };
+
+      let lang = localStorage.getItem(LANG_KEY) === "en" ? "en" : "es";
+      const t = (key, ...args) => {
+        const value = (T[lang] && T[lang][key]) ?? T.es[key] ?? key;
+        return typeof value === "function" ? value(...args) : value;
+      };
+
+      /* ---------- data ---------- */
+      const blank = {
+        meta: { title: "", team: "", period: "", owner: "", status: "route", accent: "#b8963e" },
+        goal: { verb: "", metric: "", start: 0, target: 100, current: 0, unit: "%", startDate: "", date: "" },
+        measures: [], commitments: [], blockers: [], cadence: { nextSession: "" }, history: []
+      };
+
+      function newBlank() {
+        const board = clone(blank);
+        board.meta.title = t("dfBoardTitle");
+        board.goal.verb = t("dfVerb");
+        return board;
+      }
+
+      const exampleES = {
+        meta: { title: "Excelencia en entregas · Operaciones", team: "Equipo de Operaciones", period: "Semana 29 / 2026", owner: "Mariana Torres", status: "route", accent: "#b8963e" },
+        goal: { verb: "Elevar", metric: "entregas a tiempo", start: 78, target: 92, current: 86, unit: "%", startDate: "2026-07-01", date: "2026-09-30" },
+        measures: [
+          { name: "Revisión diaria de capacidad", current: 92, target: 90, unit: "%", detail: "23 de 25 revisiones" },
+          { name: "Confirmación con proveedor", current: 84, target: 90, unit: "%", detail: "42 de 50 órdenes" }
+        ],
+        commitments: [
+          { text: "Cerrar ventana fija de confirmación a las 16:00", owner: "Laura T.", due: "2026-07-15", done: true },
+          { text: "Validar capacidad crítica de rutas Norte y Bajío", owner: "Raúl M.", due: "2026-07-16", done: true },
+          { text: "Acordar plan de recuperación con proveedor Delta", owner: "Ana V.", due: "2026-07-18", done: false }
+        ],
+        blockers: [
+          { title: "Proveedor Delta sin confirmación de capacidad", detail: "Impacto potencial: 6 órdenes críticas.", decision: "Autorizar escalación con Compras corporativas", owner: "Ana V.", due: "2026-07-18", severity: "high" },
+          { title: "Corte tardío de datos en rutas Norte", detail: "El tablero recibe el cierre con 2 horas de retraso.", decision: "Priorizar la alerta automática en TI", owner: "Laura T.", due: "2026-07-20", severity: "medium" }
+        ],
+        cadence: { nextSession: "20 Jul · 09:00" },
+        history: []
+      };
+
+      const exampleEN = {
+        meta: { title: "Delivery Excellence · Operations", team: "Operations Team", period: "Week 29 / 2026", owner: "Mariana Torres", status: "route", accent: "#b8963e" },
+        goal: { verb: "Increase", metric: "on-time deliveries", start: 78, target: 92, current: 86, unit: "%", startDate: "2026-07-01", date: "2026-09-30" },
+        measures: [
+          { name: "Daily capacity review", current: 92, target: 90, unit: "%", detail: "23 of 25 reviews" },
+          { name: "Supplier confirmation", current: 84, target: 90, unit: "%", detail: "42 of 50 orders" }
+        ],
+        commitments: [
+          { text: "Lock confirmation window at 4:00 pm", owner: "Laura T.", due: "2026-07-15", done: true },
+          { text: "Validate critical capacity for North & Bajío routes", owner: "Raúl M.", due: "2026-07-16", done: true },
+          { text: "Agree recovery plan with supplier Delta", owner: "Ana V.", due: "2026-07-18", done: false }
+        ],
+        blockers: [
+          { title: "Supplier Delta has not confirmed capacity", detail: "Potential impact: 6 critical orders.", decision: "Authorize escalation with Corporate Procurement", owner: "Ana V.", due: "2026-07-18", severity: "high" },
+          { title: "Late data cut on North routes", detail: "The scoreboard receives the daily close 2 hours late.", decision: "Prioritize the automated alert with IT", owner: "Laura T.", due: "2026-07-20", severity: "medium" }
+        ],
+        cadence: { nextSession: "Jul 20 · 9:00 am" },
+        history: []
+      };
+
+      function exampleFor(currentLang) {
+        const base = clone(currentLang === "en" ? exampleEN : exampleES);
+        const weeks = currentLang === "en" ? ["Week 26", "Week 27", "Week 28"] : ["Semana 26", "Semana 27", "Semana 28"];
+        base.history = [[weeks[0], "2026-06-26", 80], [weeks[1], "2026-07-03", 82], [weeks[2], "2026-07-10", 83]].map(([label, day, current], index) => {
+          const board = clone({ ...base, history: [] });
+          board.goal.current = current;
+          board.meta.period = label;
+          return { id: `sample-${index + 1}`, label, createdAt: `${day}T18:00:00.000Z`, board };
+        });
+        return base;
+      }
+
+      /* ---------- normalization (robust import / load) ---------- */
+      function normalizeBoard(raw, withHistory = true) {
+        const board = clone(blank);
+        if (!raw || typeof raw !== "object") return board;
+        const m = raw.meta || {}, g = raw.goal || {}, c = raw.cadence || {};
+        board.meta = {
+          title: str(m.title), team: str(m.team), period: str(m.period), owner: str(m.owner),
+          status: ["route", "watch", "blocked"].includes(m.status) ? m.status : "route",
+          accent: /^#[0-9a-fA-F]{6}$/.test(str(m.accent)) ? str(m.accent) : board.meta.accent
+        };
+        board.goal = {
+          verb: str(g.verb), metric: str(g.metric),
+          start: number(g.start), target: g.target === undefined ? 100 : number(g.target), current: number(g.current),
+          unit: str(g.unit, "%"), startDate: str(g.startDate), date: str(g.date)
+        };
+        board.measures = (Array.isArray(raw.measures) ? raw.measures : []).slice(0, LIMITS.measures)
+          .map(x => ({ name: str(x?.name), current: number(x?.current), target: number(x?.target), unit: str(x?.unit), detail: str(x?.detail) }));
+        board.commitments = (Array.isArray(raw.commitments) ? raw.commitments : []).slice(0, LIMITS.commitments)
+          .map(x => ({ text: str(x?.text), owner: str(x?.owner), due: str(x?.due), done: Boolean(x?.done) }));
+        board.blockers = (Array.isArray(raw.blockers) ? raw.blockers : []).slice(0, LIMITS.blockers)
+          .map(x => ({ title: str(x?.title), detail: str(x?.detail), decision: str(x?.decision), owner: str(x?.owner), due: str(x?.due), severity: ["high", "medium", "low"].includes(x?.severity) ? x.severity : "medium" }));
+        board.cadence = { nextSession: str(c.nextSession) };
+        board.history = withHistory && Array.isArray(raw.history)
+          ? raw.history.slice(-8).filter(s => s && s.board).map(s => ({
+              id: str(s.id, String(Date.now())), label: str(s.label, "—"),
+              createdAt: str(s.createdAt, new Date().toISOString()), board: normalizeBoard(s.board, false)
+            }))
+          : [];
+        return board;
+      }
+
+      let state = null;
+      let wizardStep = 0;
+      let saveTimer;
+      let toastTimer;
+      let confirmResolve = null;
+
+      function loadState() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return saved ? normalizeBoard(JSON.parse(saved)) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          $("#saveState").textContent = t("saveSaved");
+        } catch (_) {
+          $("#saveState").textContent = t("saveNone");
+        }
+      }
+
+      function scheduleSave() {
+        $("#saveState").textContent = t("saveSaving");
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveState, 260);
+      }
+
+      function showToast(message) {
+        const toast = $("#toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function askConfirm(message) {
+        $("#confirmText").textContent = message;
+        $("#confirmModal").classList.add("show");
+        $("#confirmOk").focus();
+        return new Promise(resolve => { confirmResolve = resolve; });
+      }
+      function closeConfirm(result) {
+        $("#confirmModal").classList.remove("show");
+        if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+      }
+      $("#confirmOk").addEventListener("click", () => closeConfirm(true));
+      $("#confirmCancel").addEventListener("click", () => closeConfirm(false));
+      $("#confirmModal").addEventListener("click", event => { if (event.target === $("#confirmModal")) closeConfirm(false); });
+      document.addEventListener("keydown", event => { if (event.key === "Escape" && $("#confirmModal").classList.contains("show")) closeConfirm(false); });
+
+      /* ---------- helpers ---------- */
+      function getPath(path) { return path.split(".").reduce((value, key) => value?.[key], state); }
+      function setPath(path, value) {
+        const parts = path.split(".");
+        const key = parts.pop();
+        const target = parts.reduce((value, part) => value[part], state);
+        target[key] = value;
+      }
+
+      function formatValue(value, unit) {
+        const numeric = number(value);
+        const formatted = Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1);
+        return `${formatted}${unit || ""}`;
+      }
+
+      function formatDate(value) {
+        if (!value) return t("noDate");
+        const [year, month, day] = value.split("-").map(Number);
+        if (!year || !month || !day) return value;
+        return new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-MX", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(year, month - 1, day));
+      }
+
+      function initials(name) {
+        const letters = String(name || "—").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join("");
+        return letters || "—";
+      }
+
+      function slugify(value) {
+        return String(value || "tablero-4dx").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "tablero-4dx";
+      }
+
+      function statusInfo(status) {
+        return {
+          route: { label: t("stRoute"), className: "route" },
+          watch: { label: t("stWatch"), className: "watch" },
+          blocked: { label: t("stBlocked"), className: "blocked" }
+        }[status] || { label: t("stRoute"), className: "route" };
+      }
+
+      function severityInfo(severity) {
+        return {
+          high: { label: t("sevHigh"), className: "high" },
+          medium: { label: t("sevMed"), className: "medium" },
+          low: { label: t("sevLow"), className: "low" }
+        }[severity] || { label: t("sevHigh"), className: "high" };
+      }
+
+      /* ---------- form ---------- */
+      function syncForm() {
+        $$('[data-field]').forEach(control => {
+          const value = getPath(control.dataset.field);
+          if (control.type === "checkbox") control.checked = Boolean(value);
+          else control.value = value ?? "";
+        });
+      }
+
+      function listField(label, list, index, key, value, type = "text", options = "") {
+        const common = `data-list="${list}" data-index="${index}" data-key="${key}"`;
+        if (type === "textarea") return `<div class="field"><label>${esc(label)}</label><textarea ${common} maxlength="140">${esc(value)}</textarea></div>`;
+        if (type === "select") return `<div class="field-group"><label>${esc(label)}</label><select ${common}>${options}</select></div>`;
+        if (type === "checkbox") return `<div class="inline-check"><input id="${list}-${index}-${key}" type="checkbox" ${common} ${value ? "checked" : ""}><label for="${list}-${index}-${key}">${esc(label)}</label></div>`;
+        const step = type === "number" ? ' step="0.1"' : "";
+        return `<div class="field-group"><label>${esc(label)}</label><input type="${type}"${step} ${common} value="${esc(value)}" maxlength="90"></div>`;
+      }
+
+      function renderEditors() {
+        $("#measuresEditor").innerHTML = state.measures.map((item, index) => `
+          <div class="list-item">
+            <div class="list-item-head"><strong>${esc(t("itMeasure"))} ${index + 1}</strong><button class="remove-btn" type="button" data-remove="measures" data-index="${index}" aria-label="${esc(t("del"))} ${esc(t("itMeasure"))} ${index + 1}">×</button></div>
+            <div class="field">${listField(t("lblName"), "measures", index, "name", item.name)}</div>
+            <div class="field two">${listField(t("lblActual"), "measures", index, "current", item.current, "number")}${listField(t("lblGoalShort"), "measures", index, "target", item.target, "number")}</div>
+            <div class="field two">${listField(t("lblUnitShort"), "measures", index, "unit", item.unit)}${listField(t("lblEvidence"), "measures", index, "detail", item.detail)}</div>
+          </div>`).join("");
+
+        $("#commitmentsEditor").innerHTML = state.commitments.map((item, index) => `
+          <div class="list-item">
+            <div class="list-item-head"><strong>${esc(t("itCommit"))} ${index + 1}</strong><button class="remove-btn" type="button" data-remove="commitments" data-index="${index}" aria-label="${esc(t("del"))} ${esc(t("itCommit"))} ${index + 1}">×</button></div>
+            ${listField(t("lblCommitText"), "commitments", index, "text", item.text, "textarea")}
+            <div class="field two">${listField(t("lblOwnerShort"), "commitments", index, "owner", item.owner)}${listField(t("lblDue"), "commitments", index, "due", item.due, "date")}</div>
+            <div class="field">${listField(t("lblDone"), "commitments", index, "done", item.done, "checkbox")}</div>
+          </div>`).join("");
+
+        $("#blockersEditor").innerHTML = state.blockers.map((item, index) => {
+          const severityOptions = ["high", "medium", "low"].map(value => `<option value="${value}" ${item.severity === value ? "selected" : ""}>${esc(severityInfo(value).label)}</option>`).join("");
+          return `
+          <div class="list-item">
+            <div class="list-item-head"><strong>${esc(t("itBlocker"))} ${index + 1}</strong><button class="remove-btn" type="button" data-remove="blockers" data-index="${index}" aria-label="${esc(t("del"))} ${esc(t("itBlocker"))} ${index + 1}">×</button></div>
+            <div class="field">${listField(t("lblBlockTitle"), "blockers", index, "title", item.title)}</div>
+            ${listField(t("lblImpact"), "blockers", index, "detail", item.detail, "textarea")}
+            ${listField(t("lblDecision"), "blockers", index, "decision", item.decision || "", "textarea")}
+            <div class="field two">${listField(t("lblOwnerShort"), "blockers", index, "owner", item.owner)}${listField(t("lblDeadline"), "blockers", index, "due", item.due || "", "date")}</div>
+            <div class="field">${listField(t("lblSeverity"), "blockers", index, "severity", item.severity, "select", severityOptions)}</div>
+          </div>`;
+        }).join("");
+
+        $$('[data-add]').forEach(button => button.disabled = state[button.dataset.add].length >= LIMITS[button.dataset.add]);
+      }
+
+      /* ---------- preview ---------- */
+      function renderMeasures() {
+        const root = $("#measuresPreview");
+        $("#measureCount").textContent = t("nActive", state.measures.length);
+        if (!state.measures.length) {
+          root.innerHTML = `<div class="empty">${esc(t("emptyMeasures"))}</div>`;
+          return;
+        }
+        root.innerHTML = "";
+        state.measures.forEach(item => {
+          const current = number(item.current);
+          const target = number(item.target);
+          const ratio = target > 0 ? clamp((current / target) * 100, 0, 100) : 0;
+          const card = document.createElement("div");
+          card.className = "measure-card";
+          const top = document.createElement("div");
+          top.className = "measure-top";
+          const name = document.createElement("span");
+          name.className = "measure-name";
+          name.textContent = item.name || t("unMeasure");
+          const value = document.createElement("strong");
+          value.className = "measure-value";
+          value.textContent = formatValue(current, item.unit);
+          top.append(name, value);
+          const meta = document.createElement("div");
+          meta.className = "measure-meta";
+          const detail = document.createElement("span");
+          detail.textContent = item.detail || t("noEvidence");
+          const targetLabel = document.createElement("span");
+          targetLabel.textContent = `${t("targetWord")} ${formatValue(target, item.unit)}`;
+          meta.append(detail, targetLabel);
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.setAttribute("role", "img");
+          bar.setAttribute("aria-label", `${item.name}: ${formatValue(current, item.unit)} / ${formatValue(target, item.unit)}`);
+          const fill = document.createElement("span");
+          fill.style.width = `${ratio}%`;
+          bar.append(fill);
+          card.append(top, meta, bar);
+          root.append(card);
+        });
+      }
+
+      function renderCommitments() {
+        const root = $("#commitmentsPreview");
+        const done = state.commitments.filter(item => item.done).length;
+        $("#commitmentCount").textContent = t("nDone", done, state.commitments.length);
+        if (!state.commitments.length) {
+          root.innerHTML = `<div class="empty">${esc(t("emptyCommit"))}</div>`;
+          return;
+        }
+        root.innerHTML = "";
+        state.commitments.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "commitment-row";
+          const mark = document.createElement("span");
+          mark.className = `done-mark${item.done ? " done" : ""}`;
+          mark.textContent = item.done ? "✓" : "";
+          mark.setAttribute("aria-label", item.done ? t("doneAria") : t("pendAria"));
+          const copy = document.createElement("div");
+          copy.className = "commitment-copy";
+          const strong = document.createElement("strong");
+          strong.textContent = item.text || t("unCommit");
+          const small = document.createElement("small");
+          small.textContent = item.done ? t("commitDone") : t("commitPend");
+          copy.append(strong, small);
+          const side = document.createElement("div");
+          side.className = "commitment-side";
+          const avatar = document.createElement("span");
+          avatar.className = "avatar";
+          avatar.textContent = initials(item.owner);
+          const time = document.createElement("time");
+          time.textContent = formatDate(item.due);
+          side.append(avatar, time);
+          row.append(mark, copy, side);
+          root.append(row);
+        });
+        const percent = state.commitments.length ? Math.round((done / state.commitments.length) * 100) : 0;
+        const strip = document.createElement("div");
+        strip.className = "completion-strip";
+        strip.innerHTML = `<span>${esc(t("complianceWord"))}</span><div class="bar"><span style="width:${percent}%"></span></div><strong>${percent}%</strong>`;
+        root.append(strip);
+      }
+
+      function renderBlockers() {
+        const root = $("#blockersPreview");
+        $("#blockerCount").textContent = t("nOpen", state.blockers.length);
+        root.innerHTML = "";
+        if (!state.blockers.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = t("emptyBlockers");
+          root.append(empty);
+        } else {
+          state.blockers.forEach(item => {
+            const info = severityInfo(item.severity);
+            const row = document.createElement("div");
+            row.className = "blocker-row";
+            const bar = document.createElement("span");
+            bar.className = `severity-bar ${info.className}`;
+            const copy = document.createElement("div");
+            copy.className = "blocker-copy";
+            const strong = document.createElement("strong");
+            strong.textContent = item.title || t("unBlocker");
+            const detail = document.createElement("p");
+            detail.textContent = item.detail || t("noDetail");
+            const decision = document.createElement("div");
+            decision.className = "decision-line";
+            decision.textContent = `${t("decisionWord")} ${item.decision || t("tbd")}`;
+            copy.append(strong, detail, decision);
+            const side = document.createElement("div");
+            side.className = "blocker-side";
+            const label = document.createElement("span");
+            label.className = `severity-label ${info.className}`;
+            label.textContent = info.label;
+            const owner = document.createElement("small");
+            owner.textContent = `${item.owner || t("toAssign")} · ${formatDate(item.due)}`;
+            side.append(label, owner);
+            row.append(bar, copy, side);
+            root.append(row);
+          });
+        }
+        const cadence = document.createElement("div");
+        cadence.className = "cadence-strip";
+        cadence.innerHTML = `<span>${esc(t("cadenceLabel"))}</span><strong>${esc(state.cadence.nextSession || t("tbd"))}</strong>`;
+        root.append(cadence);
+      }
+
+      /* ---------- status & validation ---------- */
+      function automaticStatus() {
+        const hasHighBlocker = state.blockers.some(item => item.severity === "high");
+        const start = number(state.goal.start);
+        const target = number(state.goal.target);
+        const current = number(state.goal.current);
+        const goalProgress = target === start ? (current >= target ? 1 : 0) : clamp((current - start) / (target - start), 0, 1);
+        const leadScore = state.measures.length
+          ? state.measures.reduce((sum, item) => sum + clamp(number(item.current) / Math.max(number(item.target), .0001), 0, 1.25), 0) / state.measures.length
+          : 0;
+        const startDate = state.goal.startDate ? new Date(`${state.goal.startDate}T00:00:00`) : null;
+        const endDate = state.goal.date ? new Date(`${state.goal.date}T23:59:59`) : null;
+        const now = new Date();
+        const expected = startDate && endDate && endDate > startDate
+          ? clamp((now - startDate) / (endDate - startDate), 0, 1)
+          : goalProgress;
+
+        if (hasHighBlocker) return { key: "blocked", reason: t("rBlocked") };
+        if (goalProgress + .1 < expected || (state.measures.length && leadScore < .85)) return { key: "watch", reason: t("rWatch") };
+        return { key: "route", reason: t("rRoute") };
+      }
+
+      function stepErrors(step) {
+        const errors = [];
+        if (step === 0) {
+          if (!state.meta.title.trim()) errors.push(t("vTitle"));
+          if (!state.meta.period.trim()) errors.push(t("vPeriod"));
+          if (!state.meta.owner.trim()) errors.push(t("vOwner"));
+        }
+        if (step === 1) {
+          if (!state.goal.metric.trim()) errors.push(t("vMetric"));
+          if (number(state.goal.start) === number(state.goal.target)) errors.push(t("vBase"));
+          if (!state.goal.startDate || !state.goal.date) errors.push(t("vDates"));
+          if (state.goal.startDate && state.goal.date && state.goal.startDate >= state.goal.date) errors.push(t("vOrder"));
+        }
+        if (step === 2) {
+          if (!state.measures.length) errors.push(t("vMeas"));
+          if (state.measures.some(item => !item.name.trim() || number(item.target) <= 0)) errors.push(t("vMeasFields"));
+        }
+        if (step === 3) {
+          if (!state.commitments.length) errors.push(t("vCommit"));
+          if (state.commitments.some(item => !item.text.trim() || !item.owner.trim() || !item.due)) errors.push(t("vCommitFields"));
+        }
+        if (step === 4) {
+          if (state.blockers.some(item => !item.title.trim() || !String(item.decision || "").trim() || !item.owner.trim() || !item.due)) errors.push(t("vBlock"));
+          if (!state.cadence.nextSession.trim()) errors.push(t("vSession"));
+        }
+        return errors;
+      }
+
+      function renderWizardHeader() {
+        const percent = Math.round(((wizardStep + 1) / 6) * 100);
+        $("#wizardStepLabel").textContent = `${t("stepOf", wizardStep + 1)} · ${t("ws" + wizardStep)}`;
+        $("#wizardPercent").textContent = `${percent}%`;
+        $("#wizardProgressBar").style.width = `${percent}%`;
+        $$("[data-panel]").forEach(panel => panel.classList.toggle("active", Number(panel.dataset.panel) === wizardStep));
+        $$("[data-go-step]").forEach(button => {
+          const step = Number(button.dataset.goStep);
+          button.classList.toggle("active", step === wizardStep);
+          button.classList.toggle("complete", step < wizardStep && stepErrors(step).length === 0);
+          if (step === wizardStep) button.setAttribute("aria-current", "step");
+          else button.removeAttribute("aria-current");
+        });
+        $$("[data-validation]").forEach(node => {
+          const step = Number(node.dataset.validation);
+          node.textContent = step === wizardStep ? stepErrors(step).join(" ") : "";
+        });
+      }
+
+      function renderReview() {
+        const checks = [t("ck0"), t("ck1"), t("ck2"), t("ck3"), t("ck4")].map((label, index) => [label, stepErrors(index).length === 0]);
+        $("#reviewChecks").innerHTML = checks.map(([label, ok]) => `<div class="review-check"><span>${esc(label)}</span><b style="color:${ok ? "var(--green)" : "var(--red)"}">${esc(ok ? t("okWord") : t("pendWord"))}</b></div>`).join("");
+        const status = automaticStatus();
+        const info = statusInfo(status.key);
+        $("#autoStatusSummary").textContent = `${t("autoPrefix")} ${info.label}`;
+        $("#autoStatusReason").textContent = status.reason;
+      }
+
+      function renderHistory() {
+        const root = $("#historyList");
+        if (!state.history.length) {
+          root.innerHTML = `<div class="empty" style="min-height:70px">${esc(t("histEmpty"))}</div>`;
+          return;
+        }
+        root.innerHTML = state.history.slice().reverse().map((snapshot, reverseIndex) => {
+          const index = state.history.length - 1 - reverseIndex;
+          const value = snapshot.board?.goal?.current;
+          const unit = snapshot.board?.goal?.unit || state.goal.unit || "";
+          return `<div class="history-item"><div><strong>${esc(snapshot.label)}</strong><small>${esc(formatDate(snapshot.createdAt.slice(0, 10)))} · ${esc(t("histResult", formatValue(value, unit)))}</small></div><div class="history-actions"><button class="btn light small icon" type="button" data-load-snapshot="${index}" aria-label="${esc(t("histLoad"))} ${esc(snapshot.label)}">↶</button><button class="remove-btn" type="button" data-delete-snapshot="${index}" aria-label="${esc(t("del"))} ${esc(snapshot.label)}">×</button></div></div>`;
+        }).join("");
+      }
+
+      function renderTrend() {
+        const points = state.history.slice(-7).map(snapshot => ({ label: snapshot.label, value: number(snapshot.board?.goal?.current) }));
+        points.push({ label: state.meta.period || t("nowLabel"), value: number(state.goal.current) });
+        const start = number(state.goal.start);
+        const target = number(state.goal.target);
+        const range = Math.max(Math.abs(target - start), .0001);
+        const direction = target >= start ? 1 : -1;
+        $("#trendBars").innerHTML = points.map(point => {
+          const height = clamp(Math.abs(point.value - start) / range * 100, 4, 100);
+          const regressed = (point.value - start) * direction < 0;
+          return `<div class="trend-bar${regressed ? " neg" : ""}" aria-label="${esc(point.label)}: ${esc(formatValue(point.value, state.goal.unit))}"><span style="height:${height}%"></span></div>`;
+        }).join("");
+        $("#trendLabels").innerHTML = points.map(point => `<span>${esc(point.label.replace(/^Semana\s*/i, "S").replace(/^Week\s*/i, "W"))}</span>`).join("");
+        $("#trendRange").textContent = t("weeksCount", points.length);
+      }
+
+      function goToStep(next, validateCurrent = false) {
+        if (validateCurrent) {
+          const errors = stepErrors(wizardStep);
+          if (errors.length) {
+            const node = $(`[data-validation="${wizardStep}"]`);
+            if (node) node.textContent = errors.join(" ");
+            showToast(t("tsFields"));
+            return;
+          }
+        }
+        wizardStep = clamp(next, 0, 5);
+        renderWizardHeader();
+        renderReview();
+        renderHistory();
+        $(".editor-inner").scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      /* ---------- snapshots ---------- */
+      function saveSnapshot() {
+        const label = $("#snapshotLabel").value.trim() || state.meta.period || `${t("itMeasure") === "Measure" ? "Week" : "Semana"} ${state.history.length + 1}`;
+        const board = clone({ ...state, history: [] });
+        state.history.push({ id: `${Date.now()}`, label, createdAt: new Date().toISOString(), board });
+        state.history = state.history.slice(-8);
+        $("#snapshotLabel").value = "";
+        renderHistory();
+        renderTrend();
+        saveState();
+        showToast(t("tsSnapshot"));
+      }
+
+      async function loadSnapshot(index) {
+        const snapshot = state.history[index];
+        if (!snapshot?.board) return;
+        if (!(await askConfirm(t("cfSnapLoad")))) return;
+        const history = clone(state.history);
+        state = normalizeBoard(snapshot.board, false);
+        state.history = history;
+        renderAll();
+        saveState();
+        showToast(t("tsSnapLoad", snapshot.label));
+      }
+
+      async function deleteSnapshot(index) {
+        if (!(await askConfirm(t("cfSnapDel")))) return;
+        state.history.splice(index, 1);
+        renderHistory();
+        renderTrend();
+        saveState();
+        showToast(t("tsSnapDel"));
+      }
+
+      /* ---------- main preview render ---------- */
+      function renderPreview() {
+        const accent = state.meta.accent || "#b8963e";
+        document.documentElement.style.setProperty("--accent", accent);
+        document.documentElement.style.setProperty("--accent-soft", `color-mix(in srgb, ${accent} 15%, white)`);
+        $("#activeBoardName").textContent = `${state.meta.title || t("dfBoardTitle")}${state.meta.team ? ` · ${state.meta.team}` : ""}`;
+        $$('[data-out]').forEach(node => node.textContent = getPath(node.dataset.out) || "—");
+
+        const automatic = automaticStatus();
+        state.meta.status = automatic.key;
+        const info = statusInfo(automatic.key);
+        const pill = $("#statusPill");
+        pill.textContent = info.label;
+        pill.className = `status-pill ${info.className}`;
+
+        const unit = state.goal.unit || "";
+        const start = number(state.goal.start);
+        const target = number(state.goal.target);
+        const current = number(state.goal.current);
+        $("#wigStatement").innerHTML = `${esc(state.goal.verb || t("dfVerb"))} ${esc(state.goal.metric || t("wordIndicator"))} <em>${esc(formatValue(start, unit))}</em> → <em>${esc(formatValue(target, unit))}</em> · ${esc(formatDate(state.goal.date))}`;
+        $("#startLabel").textContent = formatValue(start, unit);
+        $("#targetLabel").textContent = formatValue(target, unit);
+        $("#currentLabel").textContent = `${t("todayWord")} ${formatValue(current, unit)}`;
+        $("#dateLabel").textContent = formatDate(state.goal.date);
+        $("#scoreValue").textContent = Number.isInteger(current) ? current : current.toFixed(1);
+        $("#scoreUnit").textContent = unit;
+
+        const progress = target === start ? (current >= target ? 100 : 0) : clamp(((current - start) / (target - start)) * 100, 0, 100);
+        $("#goalFill").style.width = `${progress}%`;
+        $("#goalTrack").setAttribute("aria-label", t("ariaProgress", Math.round(progress)));
+        $("#progressLabel").textContent = t("toward", Math.round(progress));
+        $("#scoreRing").style.background = `conic-gradient(var(--accent) 0 ${progress * 3.6}deg, #2b4056 ${progress * 3.6}deg 360deg)`;
+        $("#scoreRing").setAttribute("aria-label", `${t("resultWord")}: ${formatValue(current, unit)}`);
+
+        renderTrend();
+        renderMeasures();
+        renderCommitments();
+        renderBlockers();
+        renderReview();
+      }
+
+      function renderAll() {
+        syncForm();
+        renderEditors();
+        renderPreview();
+        renderWizardHeader();
+        renderHistory();
+      }
+
+      function applyI18n() {
+        document.documentElement.lang = lang;
+        $$("[data-i18n]").forEach(node => node.textContent = t(node.dataset.i18n));
+        $$("[data-i18n-ph]").forEach(node => node.placeholder = t(node.dataset.i18nPh));
+        $$("[data-i18n-aria]").forEach(node => node.setAttribute("aria-label", t(node.dataset.i18nAria)));
+        $("#langBtn").textContent = lang === "es" ? "EN" : "ES";
+        $("#viewBtn").textContent = document.body.classList.contains("preview-only") ? t("btnEdit") : t("btnPresent");
+        renderAll();
+      }
+
+      /* ---------- input handling (no double firing) ---------- */
+      const CHANGE_ONLY = 'select, input[type="checkbox"], input[type="date"]';
+
+      function handleControl(control) {
+        const coerced = control.type === "number" ? number(control.value) : (control.type === "checkbox" ? control.checked : control.value);
+        if (control.dataset.field) {
+          setPath(control.dataset.field, coerced);
+        } else if (control.dataset.list) {
+          const item = state[control.dataset.list][Number(control.dataset.index)];
+          if (!item) return;
+          item[control.dataset.key] = coerced;
+        } else {
+          return;
+        }
+        renderPreview();
+        renderWizardHeader();
+        scheduleSave();
+      }
+
+      document.addEventListener("input", event => {
+        if (event.target.matches(CHANGE_ONLY)) return;
+        handleControl(event.target);
+      });
+      document.addEventListener("change", event => {
+        if (!event.target.matches(CHANGE_ONLY)) return;
+        handleControl(event.target);
+      });
+
+      /* ---------- list items ---------- */
+      function addItem(list) {
+        if (state[list].length >= LIMITS[list]) return;
+        const item = {
+          measures: { name: t("dfMeasure"), current: 0, target: 100, unit: "%", detail: t("dfEvidence") },
+          commitments: { text: t("dfCommit"), owner: "", due: "", done: false },
+          blockers: { title: t("dfBlockTitle"), detail: t("dfBlockDetail"), decision: t("dfBlockDecision"), owner: "", due: "", severity: "medium" }
+        }[list];
+        state[list].push(item);
+        renderEditors();
+        renderPreview();
+        scheduleSave();
+      }
+
+      async function removeItem(list, index) {
+        if (!(await askConfirm(t("cfRemoveItem")))) return;
+        state[list].splice(index, 1);
+        renderEditors();
+        renderPreview();
+        renderWizardHeader();
+        scheduleSave();
+      }
+
+      /* ---------- import / export ---------- */
+      function downloadFile(name, content, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = name;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function exportJSON() {
+        downloadFile(`${slugify(state.meta.title)}.json`, JSON.stringify(state, null, 2), "application/json;charset=utf-8");
+        showToast(t("tsJson"));
+      }
+
+      function exportHTML() {
+        const cloneReport = $("#report").cloneNode(true);
+        const css = $("#appStyles").textContent;
+        const title = esc(state.meta.title || t("dfBoardTitle"));
+        const accent = esc(state.meta.accent || "#b8963e");
+        const html = `<!doctype html>
+<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${css}
+:root{--accent:${accent};--accent-soft:color-mix(in srgb, ${accent} 15%, white)}html,body{min-width:320px;overflow:auto}.snapshot{min-height:100vh;padding:24px;background:var(--bg)}.snapshot .report{margin:auto}@media(max-width:780px){.snapshot{padding:10px}}@media print{.snapshot{padding:0;background:#fff}}</style></head>
+<body><main class="snapshot">${cloneReport.outerHTML}</main></body></html>`;
+        downloadFile(`${slugify(state.meta.title)}-one-page.html`, html, "text/html;charset=utf-8");
+        showToast(t("tsHtml"));
+      }
+
+      function importJSON(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            if (!parsed || typeof parsed !== "object" || !parsed.meta || !parsed.goal) throw new Error("bad shape");
+            state = normalizeBoard(parsed);
+            renderAll();
+            saveState();
+            showToast(t("tsImportOk"));
+          } catch (_) {
+            showToast(t("tsImportErr"));
+          }
+        };
+        reader.readAsText(file, "utf-8");
+      }
+
+      /* ---------- global click handling ---------- */
+      document.addEventListener("click", async event => {
+        const add = event.target.closest("[data-add]");
+        if (add) addItem(add.dataset.add);
+        const remove = event.target.closest("[data-remove]");
+        if (remove) { await removeItem(remove.dataset.remove, Number(remove.dataset.index)); return; }
+        const directStep = event.target.closest("[data-go-step]");
+        if (directStep) goToStep(Number(directStep.dataset.goStep));
+        if (event.target.closest("[data-next]")) goToStep(wizardStep + 1, true);
+        if (event.target.closest("[data-back]")) goToStep(wizardStep - 1);
+        const load = event.target.closest("[data-load-snapshot]");
+        if (load) { await loadSnapshot(Number(load.dataset.loadSnapshot)); return; }
+        const removeSnapshot = event.target.closest("[data-delete-snapshot]");
+        if (removeSnapshot) await deleteSnapshot(Number(removeSnapshot.dataset.deleteSnapshot));
+      });
+
+      /* ---------- topbar actions ---------- */
+      $("#langBtn").addEventListener("click", () => {
+        lang = lang === "es" ? "en" : "es";
+        localStorage.setItem(LANG_KEY, lang);
+        applyI18n();
+        showToast(t("tsLang"));
+      });
+      $("#newBtn").addEventListener("click", async () => {
+        if (!(await askConfirm(t("cfNew")))) return;
+        state = newBlank();
+        wizardStep = 0;
+        document.body.classList.remove("preview-only");
+        $("#viewBtn").textContent = t("btnPresent");
+        renderAll();
+        saveState();
+        showToast(t("tsNew"));
+      });
+      $("#clearBtn").addEventListener("click", async () => {
+        if (!(await askConfirm(t("cfClear")))) return;
+        state = newBlank();
+        wizardStep = 0;
+        renderAll();
+        saveState();
+        showToast(t("tsClear"));
+      });
+      $("#exampleBtn").addEventListener("click", async () => {
+        if (!(await askConfirm(t("cfExample")))) return;
+        state = exampleFor(lang);
+        wizardStep = 0;
+        renderAll();
+        saveState();
+        showToast(t("tsExample"));
+      });
+      $("#importBtn").addEventListener("click", () => $("#fileInput").click());
+      $("#fileInput").addEventListener("change", event => {
+        importJSON(event.target.files?.[0]);
+        event.target.value = "";
+      });
+      $("#jsonBtn").addEventListener("click", exportJSON);
+      $("#htmlBtn").addEventListener("click", exportHTML);
+      $("#snapshotBtn").addEventListener("click", saveSnapshot);
+      $("#finishBtn").addEventListener("click", () => {
+        const pending = [0, 1, 2, 3, 4].flatMap(stepErrors);
+        if (pending.length) {
+          showToast(t("tsPending"));
+          return;
+        }
+        document.body.classList.add("preview-only");
+        $("#viewBtn").textContent = t("btnEdit");
+        $("#report").scrollIntoView({ behavior: "smooth", block: "start" });
+        showToast(t("tsPresent"));
+      });
+      $("#printBtn").addEventListener("click", () => window.print());
+      $("#fitBtn").addEventListener("click", () => $("#report").scrollIntoView({ behavior: "smooth", block: "start" }));
+      $("#viewBtn").addEventListener("click", event => {
+        document.body.classList.toggle("preview-only");
+        const preview = document.body.classList.contains("preview-only");
+        event.currentTarget.textContent = preview ? t("btnEdit") : t("btnPresent");
+        showToast(preview ? t("tsPresentMode") : t("tsEditorMode"));
+      });
+
+      /* ---------- welcome (guided example) ---------- */
+      $("#welcomeExample").addEventListener("click", () => {
+        state = exampleFor(lang);
+        wizardStep = 0;
+        $("#welcome").classList.remove("show");
+        renderAll();
+        saveState();
+        showToast(t("tsExample"));
+      });
+      $("#welcomeBlank").addEventListener("click", () => {
+        state = newBlank();
+        wizardStep = 0;
+        $("#welcome").classList.remove("show");
+        renderAll();
+        saveState();
+      });
+
+      /* ---------- boot ---------- */
+      state = loadState();
+      const firstRun = !state;
+      if (!state) state = newBlank();
+      applyI18n();
+      $("#snapshotLabel").value = state.meta.period || "";
+      if (firstRun) $("#welcome").classList.add("show");
+      else saveState();
+    })();
+  </script>
+</body>
+</html>
