@@ -315,7 +315,7 @@
       .topbar { position: static; }
       .save-state { display: none; }
       .top-actions { margin-left: auto; }
-      .top-actions .btn:not(.primary):not(#viewBtn):not(#langBtn) { display: none; }
+      .top-actions .btn:not(.primary):not(#viewBtn):not(#langBtn):not(#abbSimulatorLink) { display: none; }
       .app-shell { display: block; }
       .editor { border-right: 0; border-bottom: 1px solid var(--line); }
       .editor-inner { position: static; max-height: none; }
@@ -377,6 +377,7 @@
     </div>
     <span class="save-state" id="saveState">Guardado localmente</span>
     <nav class="top-actions" aria-label="Acciones del tablero">
+      <a class="btn" id="abbSimulatorLink" href="/abb-flow-to-value/" target="_blank" rel="noopener" title="Simulador OEE, TPM, RCA, A3 y 8D">ABB Flow-to-Value ↗</a>
       <button class="btn lang" type="button" id="langBtn" aria-label="Cambiar idioma / Switch language">EN</button>
       <button class="btn" type="button" id="newBtn" data-i18n="btnNew">Nuevo</button>
       <button class="btn" type="button" id="importBtn" data-i18n="btnImport">Importar</button>
@@ -593,6 +594,7 @@
       <div class="modal-actions">
         <button class="btn primary" type="button" id="welcomeExample" data-i18n="wExample"></button>
         <button class="btn light" type="button" id="welcomeBlank" data-i18n="wBlank"></button>
+        <a class="btn light" href="/abb-flow-to-value/">Abrir simulador ABB Flow-to-Value</a>
       </div>
       <p class="modal-note" data-i18n="wNote"></p>
     </div>

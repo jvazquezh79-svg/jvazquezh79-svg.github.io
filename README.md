@@ -2,6 +2,14 @@
 
 **Demo en vivo: [jvazquezh79-svg.github.io](https://jvazquezh79-svg.github.io/)**
 
+## Simulador ABB Flow-to-Value
+
+También disponible en este sitio: **[Abrir ABB Flow-to-Value Simulator v5](https://jvazquezh79-svg.github.io/abb-flow-to-value/)**.
+
+Práctica interactiva de OEE, TPM, RCA, A3 y 8D, con turnos sintéticos, cálculos y construcción del A3 mediante arrastrar y soltar. Consulta sus [instrucciones y autoría](abb-flow-to-value/README.md). La herramienta 4DX continúa disponible en la página principal.
+
+---
+
 Aplicación web para crear el *One-Page* ejecutivo de un equipo siguiendo **las 4 Disciplinas de la Ejecución (4DX)**, combinado con el formato *4-Blocker*. Genera un tablero semanal listo para presentar a dirección: meta crucial (WIG), medidas predictivas, compromisos semanales y bloqueos con decisión solicitada.
 
 ## Características
