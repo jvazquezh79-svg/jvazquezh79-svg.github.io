@@ -8,6 +8,12 @@ También disponible en este sitio: **[Abrir ABB Flow-to-Value Simulator v5](http
 
 Práctica interactiva de OEE, TPM, RCA, A3 y 8D, con turnos sintéticos, cálculos y construcción del A3 mediante arrastrar y soltar. Consulta sus [instrucciones y autoría](abb-flow-to-value/README.md). La herramienta 4DX continúa disponible en la página principal.
 
+## Modelo de Madurez Lean Tools · ABB MTY 1.0
+
+**[Abrir el Modelo de Madurez Lean Tools](https://jvazquezh79-svg.github.io/abb-madurez-lean-tools/)**.
+
+Autoevaluación del nivel de madurez (0–4) de 14 herramientas Lean, con regla secuencial, demo guiada, versión ES/EN, roadmap de mejora y reporte ejecutivo en PDF. Consulta sus [instrucciones](abb-madurez-lean-tools/README.md).
+
 ---
 
 Aplicación web para crear el *One-Page* ejecutivo de un equipo siguiendo **las 4 Disciplinas de la Ejecución (4DX)**, combinado con el formato *4-Blocker*. Genera un tablero semanal listo para presentar a dirección: meta crucial (WIG), medidas predictivas, compromisos semanales y bloqueos con decisión solicitada.
